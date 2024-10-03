@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.metrics import r2_score
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
 from tensorflow.keras.models import Sequential 
@@ -11,16 +12,16 @@ df_gld = pd.read_csv("data/goldprice/gld_price_data.csv")
 
 # Đảm bảo cột 'Date' là kiểu thời gian và loại bỏ giá trị bị thiếu
 df_gld['Date'] = pd.to_datetime(df_gld['Date'])
-df_gld_clean = df_gld.dropna()
+df_gld['GLD'].fillna(df_gld['GLD'].mode()[0], inplace=True) # Điền giá trị thiếu 'NA' bằng giá trị xuất hiện nhiều nhất
 
 # Sử dụng giá vàng 'GLD' làm chuỗi thời gian cho dự đoán
-data = df_gld_clean[['GLD']].values
+data = df_gld[['GLD']].values
 
 # Chuẩn hóa dữ liệu
 scaler = MinMaxScaler(feature_range=(0, 1))
 scaled_data = scaler.fit_transform(data)
 
-# Chuẩn bị dữ liệu theo chuỗi thời gian
+# Chuẩn bị dữ liệu theo chuỗi thời gian: tạo hàm create dataset cho ra 2 mảng 1 là chuỗi con từ 1 tới time_step và 1 mảng là chuỗi 
 def create_dataset(dataset, time_step=1):
     X, y = [], []
     for i in range(len(dataset) - time_step - 1):
@@ -28,10 +29,10 @@ def create_dataset(dataset, time_step=1):
         y.append(dataset[i + time_step, 0])
     return np.array(X), np.array(y)
 
+
 # Chia dữ liệu thành chuỗi thời gian với mỗi bước là 60 ngày
 time_step = 60
 X, y = create_dataset(scaled_data, time_step)
-
 
 # Reshape dữ liệu để phù hợp với mô hình SimpleRNN [samples, time steps, features]
 X = X.reshape(X.shape[0], X.shape[1], 1)
@@ -59,10 +60,13 @@ predicted_prices = scaler.inverse_transform(predicted_prices)
 rmse = np.sqrt(mean_squared_error(data[time_step+1:], predicted_prices))
 print(f'Root Mean Squared Error (RMSE): {rmse}')
 
+r2 = r2_score(data[time_step+1:], predicted_prices)
+print(f"R-Square (R²): {r2}")
+
 # Vẽ biểu đồ so sánh giá trị thực tế và giá trị dự đoán
 plt.figure(figsize=(10, 6))
-plt.plot(df_gld_clean['Date'][-len(predicted_prices):], data[-len(predicted_prices):], label='Giá trị thực tế (GLD)', color='blue')
-plt.plot(df_gld_clean['Date'][-len(predicted_prices):], predicted_prices, label='Giá trị dự đoán (SimpleRNN)', color='red', linestyle='--')
+plt.plot(df_gld['Date'][-len(predicted_prices):], data[-len(predicted_prices):], label='Giá trị thực tế (GLD)', color='blue')
+plt.plot(df_gld['Date'][-len(predicted_prices):], predicted_prices, label='Giá trị dự đoán (SimpleRNN)', color='red', linestyle='--')
 
 plt.title('So sánh giá trị thực tế và dự đoán của giá vàng (GLD)')
 plt.xlabel('Ngày')
