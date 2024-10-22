@@ -34,8 +34,8 @@ def create_dataset(dataset, time_step=1):
 
 
 
-# Chia dữ liệu thành chuỗi thời gian với mỗi bước là 60 ngày
-time_step = 60
+# Chia dữ liệu thành chuỗi thời gian với mỗi bước là 5 ngày
+time_step = 5
 X_train, y_train = create_dataset(data_train, time_step)
 X_test, y_test = create_dataset(data_test, time_step)
 X_train, y_train = np.array(X_train), np.array(y_train)
@@ -56,7 +56,7 @@ model.add(Dense(1))
 model.compile(optimizer='adam', loss='mean_squared_error')
 
 # Huấn luyện mô hình
-model.fit(X_train, y_train, batch_size = 32, epochs = 1)
+model.fit(X_train, y_train, batch_size = 32, epochs = 5)
 
 # Dự đoán và đánh giá
 # Dự đoán trên tập dữ liệu

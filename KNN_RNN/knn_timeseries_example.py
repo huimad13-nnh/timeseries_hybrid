@@ -5,14 +5,19 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import KFold, cross_val_score
 from sklearn.neighbors import KNeighborsRegressor
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
 
 # Tạo dataframe từ tệp giá vàng
 df_gld = pd.read_csv("data/goldprice/gld_price_data.csv")
 df_gld['Date'] = pd.to_datetime(df_gld['Date'])  # Đảm bảo cột 'Date' là kiểu thời gian
 
 # Lấy dữ liệu cột 'GLD' và 'Date'
-data = df_gld['GLD'].values
+data = df_gld[['GLD']].values
 time = df_gld['Date'].values
+
+#Chuẩn hoá dữ liệu
+scaler = MinMaxScaler(feature_range=(0, 1))
+scaled_data = scaler.fit_transform(data)
 
 # Định nghĩa hàm tạo các cửa sổ trượt
 def create_sliding_windows(data, window_size):
@@ -26,7 +31,7 @@ def create_sliding_windows(data, window_size):
 window_size = 5
 
 # Tạo các cửa sổ trượt
-X, y = create_sliding_windows(data, window_size)
+X, y = create_sliding_windows(scaled_data, window_size)
 
 # Chia dữ liệu thành tập huấn luyện và kiểm tra
 split_ratio = 0.8
